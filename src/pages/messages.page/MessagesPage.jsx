@@ -1,24 +1,33 @@
 import React, { useState } from "react";
+import "./messagesPage.css";
+import axios from "axios";
 
 const MessagesPage = () => {
+  const [isDisabled, setIsDisabled] = useState(false);
   const [status, setStatus] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsDisabled(true);
 
     const formData = new FormData(event.target);
+    const message = formData.get("message");
+    const name = formData.get("name");
+
+    const requestData = {
+      message,
+      name,
+    };
 
     try {
       setStatus("sending");
 
-      console.log(formData);
+      const response = await axios.post(
+        "http://localhost:3000/addMessage",
+        requestData
+      );
 
-      const response = await fetch("http://localhost:3000/addMessage", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
+      if (response.status !== 200) {
         setStatus("failed");
         throw new Error("Failed to add message");
       }
@@ -34,6 +43,7 @@ const MessagesPage = () => {
   };
   return (
     <>
+      {/* Input form */}
       <form
         onSubmit={handleSubmit}
         style={{
@@ -43,23 +53,19 @@ const MessagesPage = () => {
         }}
       >
         {/* Form fields */}
-        <label htmlFor="message" style={{ width: "200px", marginTop: "10px" }}>
-          Message
-        </label>
-        <input
-          id="message"
-          type="text"
-          name="message"
-          style={{ width: "200px" }}
-        />
-        <label htmlFor="name" style={{ width: "200px", marginTop: "10px" }}>
-          Name
-        </label>
-        <input id="name" type="text" name="name" style={{ width: "200px" }} />
-        <button type="submit" style={{ marginTop: "10px" }}>
-          Submit
+        <label htmlFor="message">Message</label>
+        <input id="message" type="text" name="message" />
+        <label htmlFor="name">Name</label>
+        <input id="name" type="text" name="name" />
+        <button
+          type="submit"
+          className={isDisabled ? "buttonDisabled" : "button"}
+          disabled={isDisabled}
+        >
+          Post
         </button>
       </form>
+      {/* Response status*/}
       {status === "sending" && <p>Sending...</p>}
       {status === "success" && <p>Message sent successfully!</p>}
       {status === "failed" && <p>Failed to send message.</p>}
